@@ -48,9 +48,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('signup-form').addEventListener('submit', async function submit(event) {
+            document.getElementById('signup-form').addEventListener('submit', function submit(event) {
                 event.preventDefault();
-                // Clear previous error messages
                 const errorFields = ['usernameerr', 'emailerr', 'passworderr', 'confirmPassworderr', 'fileerr'];
                 errorFields.forEach(field => document.getElementById(field).textContent = '');
 
@@ -73,32 +72,33 @@
                 formData.append('json', file);
 
                 try {
-                    const response = await fetch('http://localhost:3000/signup', {
+                    fetch('http://localhost:3000/signup', {
                         method: 'POST',
                         body: formData,
-                    });
+                    })
+                        .then(response => response.json().then(result => ({ result, response })))
+                        .then(({ result, response }) => {
 
-                    const result = await response.json();
-                    console.log('Server response:', result);
+                            if (response.ok) {
+                                localStorage.setItem('username', username);
+                                alert(result.message);
+                                setTimeout(() => {
+                                    window.location.href = 'modify.html';
+                                }, 0);
+                            } else {
+                                // Handle errors from the server
+                                if (result.user) {
+                                    document.getElementById('usernameerr').textContent = result.user;
+                                }
+                                if (result.email) {
+                                    document.getElementById('emailerr').textContent = result.email;
+                                }
+                                if (result.fileerr) {
+                                    document.getElementById('fileerr').textContent = result.fileerr;
+                                }
+                            }
+                        })
 
-                    if (response.ok) {
-                        localStorage.setItem('username', username);
-                        alert(result.message);
-                        setTimeout(() => {
-                            window.location.href = 'modify.html';
-                        }, 0);
-                    } else {
-                        // Handle errors from the server
-                        if (result.user) {
-                            document.getElementById('usernameerr').textContent = result.user;
-                        }
-                        if (result.email) {
-                            document.getElementById('emailerr').textContent = result.email;
-                        }
-                        if (result.fileerr) {
-                            document.getElementById('fileerr').textContent = result.fileerr;
-                        }
-                    }
                 } catch (error) {
                     console.error('Error during submission:', error);
                     alert('An error occurred. Please try again.');
